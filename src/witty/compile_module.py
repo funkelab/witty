@@ -30,6 +30,48 @@ def compile_module(
     force_rebuild=False,
     quiet=False,
 ):
+    """Compile a Cython module given as a PYX source string.
+
+    The module will be stored in Cython's cache directory. Called with the same
+    ``source_pyx``, the cached module will be returned.
+
+    Args:
+
+        source_pyx (``str``):
+
+            The PYX source code.
+
+        source_files (list of ``Path``s, optional):
+
+            Additional source files the PYX code depends on. Changes to those
+            files will trigger re-compilation of the module.
+
+        include_dirs (list of ``Path``s, optional):
+        library_dirs (list of ``Path``s, optional):
+        language (``str``, optional):
+        extra_compile_args (list of ``str``, optional):
+        extra_link_args (list of ``str``, optional):
+
+            Arguments to forward to the Cython extension.
+
+        name (``str``, optional):
+
+            The base-name of the module file. Defaults to ``_witty_module``.
+
+        force_rebuild (``bool``, optional):
+
+            Force a rebuild even if a module with that name/hash already
+            exists.
+
+        quiet (``bool``, optional):
+
+            Supress output except errors and warnings.
+
+    Returns:
+
+        The compiled module.
+    """
+
     if source_files is None:
         source_files = []
     if include_dirs is None:
