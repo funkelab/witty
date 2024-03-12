@@ -1,0 +1,32 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "witty"
+description = "Well-in-Time Compiler for Cython Modules"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+  "Programming Language :: Python :: 3",
+]
+keywords = []
+license = { text = "BSD 3-Clause License" }
+authors = [
+    { email = "funkej@janelia.hhmi.org", name = "Jan Funke" },
+]
+dynamic = ["version"]
+dependencies = ["cython"]
+
+[project.optional-dependencies]
+dev = [
+  'pytest',
+  'black',
+  'mypy',
+  'pdoc',
+  'pre-commit'
+]
+
+[project.urls]
+homepage = "https://github.com/funkelab/witty"
+repository = "https://github.com/funkelab/witty"
