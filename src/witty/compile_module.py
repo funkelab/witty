@@ -37,7 +37,7 @@ def compile_module(
     if library_dirs is None:
         library_dirs = []
     if name is None:
-        name = "_wit_module"
+        name = "_witty_module"
 
     source_pyx = to_unicode(source_pyx)
     sources = [source_pyx]
