@@ -28,6 +28,7 @@ def compile_module(
     extra_link_args=None,
     name=None,
     force_rebuild=False,
+    quiet=False,
 ):
     if source_files is None:
         source_files = []
@@ -62,7 +63,8 @@ def compile_module(
     module_lib = (module_dir / module_name).with_suffix(module_ext)
     module_lock = (module_dir / module_name).with_suffix(".lock")
 
-    print(f"Compiling {module_name} into {module_lib}...")
+    if not quiet:
+        print(f"Compiling {module_name} into {module_lib}...")
 
     module_dir.mkdir(parents=True, exist_ok=True)
 
@@ -72,7 +74,8 @@ def compile_module(
 
         # already compiled?
         if module_lib.is_file() and not force_rebuild:
-            print(f"Reusing already compiled module from {module_lib}")
+            if not quiet:
+                print(f"Reusing already compiled module from {module_lib}")
             return load_dynamic(module_name, module_lib)
 
         # create pyx file
@@ -90,7 +93,7 @@ def compile_module(
         )
 
         build_extension.extensions = cythonize(
-            [extension], compiler_directives={"language_level": "3"}
+            [extension], compiler_directives={"language_level": "3"}, quiet=quiet
         )
         build_extension.build_temp = str(module_dir)
         build_extension.build_lib = str(module_dir)
