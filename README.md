@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/funkelab/witty/actions/workflows/tests.yaml/badge.svg)](https://github.com/funkelab/witty/actions/workflows/tests.yaml)
 
-Use `cython` to compile `pyx` modules at runtime.
+A "well-in-time" compiler, using `cython` to compile `pyx` modules at runtime.
 
 ```python
 from witty import compile_module
@@ -20,11 +20,40 @@ result = fancy_module.add(3, 2)
 print("fancy_module.add(3, 2) =", result)
 ```
 
+This module will no longer be needed if/when https://github.com/cython/cython/pull/555 gets merged into Cython.
+
 ## Why?
 
-Compilation at runtime is very handy to modify C/C++/PYX sources based on type information or configurations that are not known during build time. This allows combining the optimizations of C++ template libraries with Python's flexible typing system.
+Compilation at runtime is very handy to modify C/C++/PYX sources based on type information or configurations that are not known during build time. This allows combining the optimizations of C++ template libraries with Python's runtime flexibility, like so:
 
-This module will no longer be needed if/when https://github.com/cython/cython/pull/555 gets merged into Cython.
+```python
+import witty
+
+
+source_pxy_template = """
+cdef extern from '<vector>' namespace 'std':
+
+    cdef cppclass vector[T]:
+        vector()
+        void push_back(T& item)
+        size_t size()
+
+def to_vector(values):
+    vec = vector[{type}]()
+    for x in values:
+        vec.push_back(x)
+    return vec
+"""
+
+fancy_module = witty.compile_module(
+    source_pxy_template.format(type="float"), language="c++"
+)
+
+# create a C++ vector of floats from a list
+vec_float = fancy_module.to_vector([0.1, 0.2, 0.3, 1e10])
+
+print(vec_float)
+```
 
 ## How?
 
