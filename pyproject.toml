@@ -1,31 +1,21 @@
 [build-system]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools", "wheel"]
 
 [project]
 name = "witty"
 description = "Well-in-Time Compiler for Cython Modules"
 readme = "README.md"
 requires-python = ">=3.9"
-classifiers = [
-  "Programming Language :: Python :: 3",
-]
+classifiers = ["Programming Language :: Python :: 3"]
 keywords = []
 license = { text = "BSD 3-Clause License" }
-authors = [
-    { email = "funkej@janelia.hhmi.org", name = "Jan Funke" },
-]
+authors = [{ email = "funkej@janelia.hhmi.org", name = "Jan Funke" }]
 dynamic = ["version"]
 dependencies = ["cython", "setuptools; python_version >= '3.12'"]
 
 [project.optional-dependencies]
-dev = [
-  'pytest',
-  'ruff',
-  'mypy',
-  'pdoc',
-  'pre-commit'
-]
+dev = ['pytest', 'ruff', 'mypy', 'pdoc', 'pre-commit']
 
 [project.urls]
 homepage = "https://github.com/funkelab/witty"
@@ -34,3 +24,24 @@ repository = "https://github.com/funkelab/witty"
 [tool.ruff]
 target-version = "py39"
 src = ["src"]
+
+[tool.ruff.lint]
+select = [
+  "E",  # style errors
+  "F",  # flakes
+  "W",  # warnings
+  "I",  # isort
+  "UP", # pyupgrade
+]
+
+[tool.mypy]
+files = "src/**/*.py"
+strict = true
+disallow_any_generics = false
+disallow_subclassing_any = false
+show_error_codes = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
