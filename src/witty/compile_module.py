@@ -10,9 +10,9 @@ from Cython.Utils import get_cython_cache_dir
 from pathlib import Path
 
 try:
-    from setuptools import Extension
-except ImportError:
     from distutils.core import Extension
+except ImportError:
+    from setuptools import Extension
 
 
 def load_dynamic(module_name, module_lib):
