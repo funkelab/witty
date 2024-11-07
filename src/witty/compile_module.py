@@ -6,8 +6,12 @@ import sys
 from Cython.Build import cythonize
 from Cython.Build.Inline import to_unicode, _get_build_extension
 from Cython.Utils import get_cython_cache_dir
-from distutils.core import Extension
 from pathlib import Path
+
+try:
+    from setuptools import Extension
+except ImportError:
+    from distutils.core import Extension
 
 
 def load_dynamic(module_name, module_lib):

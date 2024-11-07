@@ -25,7 +25,7 @@ def to_vector({type} x):
     result = module_int.add(3, 4)
 
     assert result == 7
-    assert type(result) == int
+    assert type(result) is int
 
     module_float = witty.compile_module(
         source_pxy_template.format(type="float"), language="c++"
@@ -33,4 +33,4 @@ def to_vector({type} x):
     result = module_float.add(3, 4)
 
     assert result == 7
-    assert type(result) == float
+    assert type(result) is float
