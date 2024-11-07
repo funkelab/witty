@@ -6,7 +6,7 @@ requires = ["setuptools", "wheel"]
 name = "witty"
 description = "Well-in-Time Compiler for Cython Modules"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
   "Programming Language :: Python :: 3",
 ]
@@ -16,12 +16,12 @@ authors = [
     { email = "funkej@janelia.hhmi.org", name = "Jan Funke" },
 ]
 dynamic = ["version"]
-dependencies = ["cython"]
+dependencies = ["cython", "setuptools; python_version >= '3.12'"]
 
 [project.optional-dependencies]
 dev = [
   'pytest',
-  'black',
+  'ruff',
   'mypy',
   'pdoc',
   'pre-commit'
@@ -30,3 +30,7 @@ dev = [
 [project.urls]
 homepage = "https://github.com/funkelab/witty"
 repository = "https://github.com/funkelab/witty"
+
+[tool.ruff]
+target-version = "py39"
+src = ["src"]

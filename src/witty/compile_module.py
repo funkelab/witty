@@ -1,13 +1,17 @@
+import os
 import Cython
-import fcntl
 import hashlib
 import importlib.util
 import sys
 from Cython.Build import cythonize
 from Cython.Build.Inline import to_unicode, _get_build_extension
 from Cython.Utils import get_cython_cache_dir
-from distutils.core import Extension
 from pathlib import Path
+
+try:
+    from distutils.core import Extension
+except ImportError:
+    from setuptools import Extension  # type: ignore [no-redef]
 
 
 def load_dynamic(module_name, module_lib):
@@ -111,8 +115,8 @@ def compile_module(
     module_dir.mkdir(parents=True, exist_ok=True)
 
     # make sure the same module is not build concurrently
-    with open(module_lock, "w") as lock_file:
-        fcntl.lockf(lock_file, fcntl.LOCK_EX)
+    with open(module_lock, "w") as lock_f:
+        lock_file(lock_f)
 
         # already compiled?
         if module_lib.is_file() and not force_rebuild:
@@ -142,3 +146,22 @@ def compile_module(
         build_extension.run()
 
     return load_dynamic(module_name, module_lib)
+
+
+if os.name == "nt":
+    import msvcrt
+
+    def lock_file(file):
+        msvcrt.locking(file.fileno(), msvcrt.LK_LOCK, os.path.getsize(file.name))
+
+    def unlock_file(file):
+        msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, os.path.getsize(file.name))
+
+else:
+    import fcntl
+
+    def lock_file(file):
+        fcntl.lockf(file, fcntl.LOCK_EX)
+
+    def unlock_file(file):
+        fcntl.lockf(file, fcntl.LOCK_UN)
