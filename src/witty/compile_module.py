@@ -1,6 +1,5 @@
 import os
 import Cython
-import fcntl
 import hashlib
 import importlib.util
 import sys
@@ -12,7 +11,7 @@ from pathlib import Path
 try:
     from distutils.core import Extension
 except ImportError:
-    from setuptools import Extension
+    from setuptools import Extension  # type: ignore [no-redef]
 
 
 def load_dynamic(module_name, module_lib):
