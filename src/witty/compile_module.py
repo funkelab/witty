@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 import os
 import sys
 from contextlib import contextmanager
@@ -81,7 +82,9 @@ def compile_module(
     ModuleType
         The compiled module.
     """
-    module_hash = _hash_sources(source_pyx, source_files)
+    module_hash = _generate_hash(
+        source_pyx, source_files, extra_compile_args, extra_link_args, extension_kwargs
+    )
     module_name = name + "_" + module_hash
 
     # already loaded?
@@ -144,12 +147,35 @@ def _load_dynamic(module_name: str, module_path: Path) -> ModuleType:
     return sys.modules[module_name]
 
 
-def _hash_sources(source_pyx: str, source_files: Sequence[Path | str] = ()) -> str:
+def _generate_hash(
+    source_pyx: str, source_files: Sequence[Path | str] = (), *args: dict | list | None
+) -> str:
     """Generate a hash key for a `source_pyx` along with other source file paths."""
     sources = [source_pyx] + [Path(source).read_text() for source in source_files]
-    hashes = [hashlib.md5(source.encode("utf-8")).hexdigest() for source in sources]
-    source_key = (hashes, sys.version_info, sys.executable, Cython.__version__)
+    src_hashes = [hashlib.md5(source.encode("utf-8")).hexdigest() for source in sources]
+    arg_hash = _hash_args(args)
+    source_key = (
+        src_hashes,
+        arg_hash,
+        sys.version_info,
+        sys.executable,
+        Cython.__version__,
+    )
     return hashlib.md5(str(source_key).encode("utf-8")).hexdigest()
+
+
+def _hash_args(containers: tuple[dict | list | None, ...]) -> str:
+    """Hash a bunch of mutable arg container objects in a reproducible way.
+
+    This is for stuff like extra_compile_args, extra_link_args, and extension_kwargs.
+    """
+    hash_obj = hashlib.md5()
+    for container in containers:
+        # sort dict keys for reproducibility
+        serialized = json.dumps(container, sort_keys=True)
+        # Update the hash object with the serialized container
+        hash_obj.update(serialized.encode())
+    return hash_obj.hexdigest()
 
 
 @contextmanager
