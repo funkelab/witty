@@ -13,15 +13,11 @@ import Cython
 from Cython.Build import cythonize
 from Cython.Build.Inline import build_ext
 from Cython.Utils import get_cython_cache_dir
+from setuptools import Distribution, Extension
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
     from types import ModuleType
-
-try:
-    from distutils.core import Distribution, Extension  # until Python 3.11
-except ImportError:
-    from setuptools import Distribution, Extension
 
 
 def compile_module(
