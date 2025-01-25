@@ -1,6 +1,9 @@
 # witty
 
-[![tests](https://github.com/funkelab/witty/actions/workflows/tests.yaml/badge.svg)](https://github.com/funkelab/witty/actions/workflows/tests.yaml)
+[![License](https://img.shields.io/pypi/l/witty.svg?color=green)](https://github.com/funkelab/witty/raw/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/witty.svg?color=green)](https://pypi.org/project/witty)
+[![Python Version](https://img.shields.io/pypi/pyversions/witty.svg?color=green)](https://python.org)
+[![CI](https://github.com/funkelab/witty/actions/workflows/ci.yaml/badge.svg)](https://github.com/funkelab/witty/actions/workflows/ci.yaml)
 
 A "well-in-time" compiler, using `cython` to compile `pyx` modules at runtime.
 
