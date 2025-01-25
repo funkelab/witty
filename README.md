@@ -58,3 +58,15 @@ print(vec_float)
 ## How?
 
 `witty` invokes `cython` to compile the module given as a PYX string (just like it would compile it during build time). The compiled module ends up in the Cython cache directory, with a hash build from the content of the PYX string. Repeated calls to `compile_module` will only invoke the compiler if the exact PYX string has not been compiled before (or if `force_rebuild==True`). Compilation is protected by a file lock, i.e., concurrent calls to `compile_module` are safe.
+
+## For developers
+
+To push a new release, make sure you've pulled main and are definitely on
+the commit you want to release, then tag a commit and push to github:
+
+```sh
+git tag -a vX.Y.Z -m vX.Y.Z
+git push upstream --follow-tags
+```
+
+The deploy is handled by [`workflows/ci.yaml`](.github/workflows/ci.yaml#L44)
