@@ -40,4 +40,5 @@ def to_vector({type} x):
     assert result == 7
     assert type(result) is float
 
+    assert module_float.__file__
     assert Path(module_float.__file__).parent == tmp_path
