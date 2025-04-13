@@ -34,7 +34,7 @@ def compile_module(
     extra_compile_args: list[str] | None = None,
     extra_link_args: list[str] | None = None,
     name: str = "_witty_module",
-    force_rebuild: bool = False,
+    force_rebuild: bool | None = None,
     quiet: bool = False,
     output_dir: Path = WITTY_CACHE,
     **extension_kwargs: Any,
@@ -72,7 +72,8 @@ def compile_module(
     name : str, optional
         The base name of the module file. Defaults to "_witty_module".
     force_rebuild : bool, optional
-        Force a rebuild even if a module with the same name/hash already exists.
+        Force a rebuild even if a module with the same name/hash already exists. By
+        default False.  May be set via environment variable `WITTY_FORCE_REBUILD=1`.
     quiet : bool, optional
         Suppress output except for errors and warnings.
     output_dir : Path, optional
@@ -88,6 +89,9 @@ def compile_module(
     ModuleType
         The compiled module.
     """
+    if force_rebuild is None:
+        force_rebuild = os.getenv("WITTY_FORCE_REBUILD", "0").lower() in ("1", "true")
+
     module_hash = _generate_hash(
         source_pyx, source_files, extra_compile_args, extra_link_args, extension_kwargs
     )
