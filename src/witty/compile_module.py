@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 import sys
+import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -20,6 +21,9 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
+WITTY_CACHE = Path(get_cython_cache_dir()) / "witty"
+
+
 def compile_module(
     source_pyx: str,
     *,
@@ -32,6 +36,7 @@ def compile_module(
     name: str = "_witty_module",
     force_rebuild: bool = False,
     quiet: bool = False,
+    output_dir: Path = WITTY_CACHE,
     **extension_kwargs: Any,
 ) -> ModuleType:
     """Compile a Cython module given as a PYX source string.
@@ -70,6 +75,11 @@ def compile_module(
         Force a rebuild even if a module with the same name/hash already exists.
     quiet : bool, optional
         Suppress output except for errors and warnings.
+    output_dir : Path, optional
+        Directory to store the compiled module. Defaults to a 'witty' subdirectory in
+        the Cython cache directory: `Cython.Utils.get_cython_cache_dir() / "witty"`.
+        Note that the output directory is also where the compiled module will be
+        searched for when reloading.
     extension_kwargs : dict, optional
         Additional keyword arguments passed to the distutils `Extension` constructor.
 
@@ -89,45 +99,46 @@ def compile_module(
 
     build_extension = _get_build_extension()
     module_ext = build_extension.get_ext_filename("")
-    module_dir = Path(get_cython_cache_dir()) / "witty"
-    module_pyx = (module_dir / module_name).with_suffix(".pyx")
-    module_lib = (module_dir / module_name).with_suffix(module_ext)
 
-    if not quiet:
-        print(f"Compiling {module_name} into {module_lib}...")
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    module_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        module_pyx = Path(temp_dir, module_name).with_suffix(".pyx")
+        module_lib = (output_dir / module_name).with_suffix(module_ext)
+        if not quiet:
+            print(f"Compiling {module_name} into {module_lib}...")
 
-    # make sure the same module is not build concurrently
-    with _module_locked(module_pyx):
-        # already compiled?
-        if module_lib.is_file() and not force_rebuild:
-            if not quiet:
-                print(f"Reusing already compiled module from {module_lib}")
-            return _load_dynamic(module_name, module_lib)
+        # make sure the same module is not build concurrently
+        with _module_locked(module_pyx):
+            # already compiled?
+            if module_lib.is_file() and not force_rebuild:
+                if not quiet:
+                    print(f"Reusing already compiled module from {module_lib}")
+                return _load_dynamic(module_name, module_lib)
 
-        # create pyx file
-        module_pyx.write_text(source_pyx)
+            # create pyx file
+            module_pyx.write_text(source_pyx)
 
-        extension = Extension(
-            module_name,
-            sources=[str(module_pyx)],
-            include_dirs=[str(x) for x in include_dirs],
-            library_dirs=[str(x) for x in library_dirs],
-            language=language,
-            extra_compile_args=extra_compile_args,
-            extra_link_args=extra_link_args,
-            **(extension_kwargs or {}),
-        )
+            extension = Extension(
+                module_name,
+                sources=[str(module_pyx)],
+                include_dirs=[str(x) for x in include_dirs],
+                library_dirs=[str(x) for x in library_dirs],
+                language=language,
+                extra_compile_args=extra_compile_args,
+                extra_link_args=extra_link_args,
+                **(extension_kwargs or {}),
+            )
 
-        build_extension.extensions = cythonize(
-            [extension],
-            compiler_directives={"language_level": "3"},
-            quiet=quiet,
-        )
-        build_extension.build_temp = str(module_dir)
-        build_extension.build_lib = str(module_dir)
-        build_extension.run()
+            build_extension.extensions = cythonize(
+                [extension],
+                compiler_directives={"language_level": "3"},
+                quiet=quiet,
+            )
+            build_extension.build_temp = temp_dir
+            build_extension.build_lib = str(output_dir)
+            build_extension.run()
 
     return _load_dynamic(module_name, module_lib)
 
