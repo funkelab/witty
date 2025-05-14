@@ -96,7 +96,7 @@ def compile_module(
         Suppress output except for errors and warnings.
     output_dir : Path, optional
         Directory to store the compiled module. If not provided, the module will be
-        stored in the default cache directory:
+        stored in the output of `witty.get_witty_cache_dir()`:
         - os.environ["WITTY_CACHE_DIR"] if set
         - Windows: `%LOCALAPPDATA%/witty/cache`
         - macOS: `~/Library/Caches/witty`
