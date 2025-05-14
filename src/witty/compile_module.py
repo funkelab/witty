@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any, Literal
 import Cython
 from Cython.Build import cythonize
 from Cython.Build.Inline import build_ext
-from Cython.Utils import get_cython_cache_dir
 from setuptools import Distribution, Extension
 
 if TYPE_CHECKING:
@@ -21,7 +20,26 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-WITTY_CACHE = Path(get_cython_cache_dir()) / "witty"
+def get_witty_cache_dir() -> Path:
+    """Return the base directory containing Witty's caches.
+
+    This function does not ensure that the directory exists.
+    """
+    if "WITTY_CACHE_DIR" in os.environ:
+        cache_dir = Path(os.environ["WITTY_CACHE_DIR"])
+    elif sys.platform == "win32":
+        if local_app := os.getenv("LOCALAPPDATA"):
+            cache_dir = Path(local_app) / "witty" / "cache"
+        else:
+            cache_dir = Path.home() / ".witty" / "cache"
+    elif sys.platform == "darwin":
+        cache_dir = Path.home() / "Library" / "Caches" / "witty"
+    else:
+        if xdg_cache := os.getenv("XDG_CACHE_HOME"):
+            cache_dir = Path(xdg_cache) / "witty"
+        else:
+            cache_dir = Path.home() / ".cache" / "witty"
+    return cache_dir.expanduser().absolute()
 
 
 def compile_module(
@@ -36,7 +54,7 @@ def compile_module(
     name: str = "_witty_module",
     force_rebuild: bool | None = None,
     quiet: bool = False,
-    output_dir: Path = WITTY_CACHE,
+    output_dir: Path | None = None,
     **extension_kwargs: Any,
 ) -> ModuleType:
     """Compile a Cython module given as a PYX source string.
@@ -89,6 +107,10 @@ def compile_module(
     ModuleType
         The compiled module.
     """
+    if output_dir is None:
+        output_dir = get_witty_cache_dir()
+        output_dir.mkdir(parents=True, exist_ok=True)
+
     if force_rebuild is None:
         force_rebuild = os.getenv("WITTY_FORCE_REBUILD", "0").lower() in ("1", "true")
 

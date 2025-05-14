@@ -6,6 +6,6 @@ except PackageNotFoundError:
     # package is not installed
     __version__ = "unknown"
 
-from .compile_module import WITTY_CACHE, compile_module
+from .compile_module import compile_module, get_witty_cache_dir
 
-__all__ = ["compile_module", "WITTY_CACHE"]
+__all__ = ["compile_module", "get_witty_cache_dir", "__version__"]

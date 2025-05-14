@@ -3,6 +3,11 @@ from pathlib import Path
 import witty
 
 
+def test_cache_dir() -> None:
+    # smoke test to check if the cache dir is created
+    assert isinstance(witty.get_witty_cache_dir(), Path)
+
+
 def test_compile(tmp_path: Path) -> None:
     source_pxy_template = """
 cdef extern from '<vector>' namespace 'std':
