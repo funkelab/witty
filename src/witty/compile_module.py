@@ -23,6 +23,11 @@ if TYPE_CHECKING:
 def get_witty_cache_dir() -> Path:
     """Return the base directory containing Witty's caches.
 
+    - os.environ["WITTY_CACHE_DIR"] if set
+    - Windows: `%LOCALAPPDATA%/witty/cache`
+    - macOS: `~/Library/Caches/witty`
+    - Linux: os.environ['XDG_CACHE_HOME']/witty or `~/.cache/witty`
+
     This function does not ensure that the directory exists.
     """
     if "WITTY_CACHE_DIR" in os.environ:
