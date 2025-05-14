@@ -95,10 +95,12 @@ def compile_module(
     quiet : bool, optional
         Suppress output except for errors and warnings.
     output_dir : Path, optional
-        Directory to store the compiled module. Defaults to a 'witty' subdirectory in
-        the Cython cache directory: `Cython.Utils.get_cython_cache_dir() / "witty"`.
-        Note that the output directory is also where the compiled module will be
-        searched for when reloading.
+        Directory to store the compiled module. If not provided, the module will be
+        stored in the default cache directory:
+        - os.environ["WITTY_CACHE_DIR"] if set
+        - Windows: `%LOCALAPPDATA%/witty/cache`
+        - macOS: `~/Library/Caches/witty`
+        - Linux: os.environ['XDG_CACHE_HOME']/witty or `~/.cache/witty`
     extension_kwargs : dict, optional
         Additional keyword arguments passed to the distutils `Extension` constructor.
 
