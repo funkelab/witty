@@ -5,19 +5,46 @@ import importlib.util
 import json
 import os
 import sys
+import tempfile
 from contextlib import contextmanager
+from distutils.command.build_ext import build_ext
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import Cython
-from Cython.Build import cythonize
-from Cython.Build.Inline import build_ext
-from Cython.Utils import get_cython_cache_dir
+from Cython.Build.Dependencies import cythonize
 from setuptools import Distribution, Extension
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
     from types import ModuleType
+
+
+def get_witty_cache_dir() -> Path:
+    """Return the base directory containing Witty's caches.
+
+    - os.environ["WITTY_CACHE_DIR"] if set
+    - Windows: `%LOCALAPPDATA%/witty/cache`
+    - macOS: `~/Library/Caches/witty`
+    - Linux: os.environ['XDG_CACHE_HOME']/witty or `~/.cache/witty`
+
+    This function does not ensure that the directory exists.
+    """
+    if "WITTY_CACHE_DIR" in os.environ:
+        cache_dir = Path(os.environ["WITTY_CACHE_DIR"])
+    elif sys.platform == "win32":
+        if local_app := os.getenv("LOCALAPPDATA"):
+            cache_dir = Path(local_app) / "witty" / "cache"
+        else:
+            cache_dir = Path.home() / ".witty" / "cache"
+    elif sys.platform == "darwin":
+        cache_dir = Path.home() / "Library" / "Caches" / "witty"
+    else:
+        if xdg_cache := os.getenv("XDG_CACHE_HOME"):
+            cache_dir = Path(xdg_cache) / "witty"
+        else:
+            cache_dir = Path.home() / ".cache" / "witty"
+    return cache_dir.expanduser().absolute()
 
 
 def compile_module(
@@ -30,8 +57,9 @@ def compile_module(
     extra_compile_args: list[str] | None = None,
     extra_link_args: list[str] | None = None,
     name: str = "_witty_module",
-    force_rebuild: bool = False,
+    force_rebuild: bool | None = None,
     quiet: bool = False,
+    output_dir: Path | None = None,
     **extension_kwargs: Any,
 ) -> ModuleType:
     """Compile a Cython module given as a PYX source string.
@@ -67,9 +95,17 @@ def compile_module(
     name : str, optional
         The base name of the module file. Defaults to "_witty_module".
     force_rebuild : bool, optional
-        Force a rebuild even if a module with the same name/hash already exists.
+        Force a rebuild even if a module with the same name/hash already exists. By
+        default False.  May be set via environment variable `WITTY_FORCE_REBUILD=1`.
     quiet : bool, optional
         Suppress output except for errors and warnings.
+    output_dir : Path, optional
+        Directory to store the compiled module. If not provided, the module will be
+        stored in the output of `witty.get_witty_cache_dir()`:
+        - os.environ["WITTY_CACHE_DIR"] if set
+        - Windows: `%LOCALAPPDATA%/witty/cache`
+        - macOS: `~/Library/Caches/witty`
+        - Linux: os.environ['XDG_CACHE_HOME']/witty or `~/.cache/witty`
     extension_kwargs : dict, optional
         Additional keyword arguments passed to the distutils `Extension` constructor.
 
@@ -78,6 +114,13 @@ def compile_module(
     ModuleType
         The compiled module.
     """
+    if output_dir is None:
+        output_dir = get_witty_cache_dir()
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    if force_rebuild is None:
+        force_rebuild = os.getenv("WITTY_FORCE_REBUILD", "0").lower() in ("1", "true")
+
     module_hash = _generate_hash(
         source_pyx, source_files, extra_compile_args, extra_link_args, extension_kwargs
     )
@@ -89,45 +132,46 @@ def compile_module(
 
     build_extension = _get_build_extension()
     module_ext = build_extension.get_ext_filename("")
-    module_dir = Path(get_cython_cache_dir()) / "witty"
-    module_pyx = (module_dir / module_name).with_suffix(".pyx")
-    module_lib = (module_dir / module_name).with_suffix(module_ext)
 
-    if not quiet:
-        print(f"Compiling {module_name} into {module_lib}...")
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    module_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        module_pyx = Path(temp_dir, module_name).with_suffix(".pyx")
+        module_lib = (output_dir / module_name).with_suffix(module_ext)
+        if not quiet:
+            print(f"Compiling {module_name} into {module_lib}...")
 
-    # make sure the same module is not build concurrently
-    with _module_locked(module_pyx):
-        # already compiled?
-        if module_lib.is_file() and not force_rebuild:
-            if not quiet:
-                print(f"Reusing already compiled module from {module_lib}")
-            return _load_dynamic(module_name, module_lib)
+        # make sure the same module is not build concurrently
+        with _module_locked(module_pyx):
+            # already compiled?
+            if module_lib.is_file() and not force_rebuild:
+                if not quiet:
+                    print(f"Reusing already compiled module from {module_lib}")
+                return _load_dynamic(module_name, module_lib)
 
-        # create pyx file
-        module_pyx.write_text(source_pyx)
+            # create pyx file
+            module_pyx.write_text(source_pyx)
 
-        extension = Extension(
-            module_name,
-            sources=[str(module_pyx)],
-            include_dirs=[str(x) for x in include_dirs],
-            library_dirs=[str(x) for x in library_dirs],
-            language=language,
-            extra_compile_args=extra_compile_args,
-            extra_link_args=extra_link_args,
-            **(extension_kwargs or {}),
-        )
+            extension = Extension(
+                module_name,
+                sources=[str(module_pyx)],
+                include_dirs=[str(x) for x in include_dirs],
+                library_dirs=[str(x) for x in library_dirs],
+                language=language,
+                extra_compile_args=extra_compile_args,
+                extra_link_args=extra_link_args,
+                **(extension_kwargs or {}),
+            )
 
-        build_extension.extensions = cythonize(
-            [extension],
-            compiler_directives={"language_level": "3"},
-            quiet=quiet,
-        )
-        build_extension.build_temp = str(module_dir)
-        build_extension.build_lib = str(module_dir)
-        build_extension.run()
+            build_extension.extensions = cythonize(  # type: ignore [no-untyped-call]
+                [extension],
+                compiler_directives={"language_level": "3"},
+                quiet=quiet,
+            )
+            build_extension.build_temp = temp_dir
+            build_extension.build_lib = str(output_dir)
+            build_extension.run()
 
     return _load_dynamic(module_name, module_lib)
 
@@ -155,7 +199,7 @@ def _generate_hash(
         arg_hash,
         sys.version_info,
         sys.executable,
-        Cython.__version__,
+        Cython.__version__,  # type: ignore [attr-defined]
     )
     return hashlib.md5(str(source_key).encode("utf-8")).hexdigest()
 
