@@ -7,12 +7,12 @@ import os
 import sys
 import tempfile
 from contextlib import contextmanager
+from distutils.command.build_ext import build_ext
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import Cython
-from Cython.Build import cythonize
-from Cython.Build.Inline import build_ext
+from Cython.Build.Dependencies import cythonize
 from setuptools import Distribution, Extension
 
 if TYPE_CHECKING:
@@ -164,7 +164,7 @@ def compile_module(
                 **(extension_kwargs or {}),
             )
 
-            build_extension.extensions = cythonize(
+            build_extension.extensions = cythonize(  # type: ignore [no-untyped-call]
                 [extension],
                 compiler_directives={"language_level": "3"},
                 quiet=quiet,
@@ -199,7 +199,7 @@ def _generate_hash(
         arg_hash,
         sys.version_info,
         sys.executable,
-        Cython.__version__,
+        Cython.__version__,  # type: ignore [attr-defined]
     )
     return hashlib.md5(str(source_key).encode("utf-8")).hexdigest()
 
