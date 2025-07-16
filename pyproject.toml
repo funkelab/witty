@@ -28,7 +28,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = ['pytest', 'ruff', 'mypy', 'pdoc', 'pre-commit', 'ipython']
 
 [project.urls]
