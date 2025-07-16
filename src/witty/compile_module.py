@@ -131,14 +131,15 @@ def compile_module(
         force_rebuild = os.getenv("WITTY_FORCE_REBUILD", "0").lower() in ("1", "true")
 
     module_name = name
+    witty_hash = module_hash(
+        source_pyx,
+        source_files,
+        extra_compile_args,
+        extra_link_args,
+        extension_kwargs,
+    )
     if add_hash_to_name:
-        module_name += "_" + module_hash(
-            source_pyx,
-            source_files,
-            extra_compile_args,
-            extra_link_args,
-            extension_kwargs,
-        )
+        module_name += "_" + witty_hash
 
     # already loaded?
     if module_name in sys.modules and not force_rebuild:
@@ -164,8 +165,15 @@ def compile_module(
                     print(f"Reusing already compiled module from {module_lib}")
                 return _load_dynamic(module_name, module_lib)
 
-            # create pyx file
-            module_pyx.write_text(source_pyx)
+            # create pyx file with injected hash
+            modified_source = source_pyx
+            if witty_hash:
+                # Inject the hash as a module-level variable
+                hash_injection = (
+                    f'# Injected by witty\n__witty_hash__ = "{witty_hash}"\n\n'
+                )
+                modified_source = hash_injection + source_pyx
+            module_pyx.write_text(modified_source)
 
             extension = Extension(
                 module_name,
