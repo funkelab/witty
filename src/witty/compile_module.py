@@ -60,6 +60,7 @@ def compile_module(
     force_rebuild: bool | None = None,
     quiet: bool = False,
     output_dir: Path | None = None,
+    add_hash_to_name: bool = True,
     **extension_kwargs: Any,
 ) -> ModuleType:
     """Compile a Cython module given as a PYX source string.
@@ -106,6 +107,14 @@ def compile_module(
         - Windows: `%LOCALAPPDATA%/witty/cache`
         - macOS: `~/Library/Caches/witty`
         - Linux: os.environ['XDG_CACHE_HOME']/witty or `~/.cache/witty`
+    add_hash_to_name : bool, optional
+        If `True` (the default), the module name will be suffixed with a hash of the
+        source code and compilation arguments.  (See `module_hash()` function). This
+        supports witty's ability to recompile well-in-time if needed.  You may wish to
+        set this to `False` when compiling to a fixed name and output_dir, e.g., for a
+        Python package.  However, be careful setting this to `False` in all other cases,
+        as it may lead to stale modules being loaded if the source code changes but the
+        module name does not.
     extension_kwargs : dict, optional
         Additional keyword arguments passed to the distutils `Extension` constructor.
 
@@ -121,10 +130,15 @@ def compile_module(
     if force_rebuild is None:
         force_rebuild = os.getenv("WITTY_FORCE_REBUILD", "0").lower() in ("1", "true")
 
-    module_hash = _generate_hash(
-        source_pyx, source_files, extra_compile_args, extra_link_args, extension_kwargs
-    )
-    module_name = name + "_" + module_hash
+    module_name = name
+    if add_hash_to_name:
+        module_name += "_" + module_hash(
+            source_pyx,
+            source_files,
+            extra_compile_args,
+            extra_link_args,
+            extension_kwargs,
+        )
 
     # already loaded?
     if module_name in sys.modules and not force_rebuild:
@@ -187,10 +201,29 @@ def _load_dynamic(module_name: str, module_path: Path) -> ModuleType:
     return sys.modules[module_name]
 
 
-def _generate_hash(
-    source_pyx: str, source_files: Sequence[Path | str] = (), *args: dict | list | None
+def module_hash(
+    source_pyx: str,
+    source_files: Sequence[Path | str] = (),
+    *args: dict | list | None,
 ) -> str:
-    """Generate a hash key for a `source_pyx` along with other source file paths."""
+    """Generate a hash key for a `source_pyx` along with other source file paths.
+
+    Parameters
+    ----------
+    source_pyx : str
+        The PYX source code as a string.
+    source_files : list of Path or str, optional
+        Additional source files the PYX code depends on.
+    args : dict or list, optional
+        Additional mutable arguments that affect the compilation, such as
+        `extra_compile_args`, `extra_link_args`, and `extension_kwargs`.  These will
+        be serialized using `json.dumps` with sorted keys, and hashed using MD5.
+
+    Returns
+    -------
+    str
+        A hash key that uniquely identifies the module based on its source code and
+    """
     sources = [source_pyx] + [Path(source).read_text() for source in source_files]
     src_hashes = [hashlib.md5(source.encode("utf-8")).hexdigest() for source in sources]
     arg_hash = _hash_args(args)
