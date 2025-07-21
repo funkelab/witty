@@ -28,8 +28,8 @@ classifiers = [
   "Typing :: Typed",
 ]
 
-[project.optional-dependencies]
-dev = ['pytest', 'ruff', 'mypy', 'pdoc', 'pre-commit', 'ipython']
+[dependency-groups]
+dev = ['pytest', 'ruff', 'mypy', 'pdoc', 'pre-commit', 'ipython', 'pytest-cov']
 
 [project.urls]
 homepage = "https://github.com/funkelab/witty"
@@ -59,3 +59,23 @@ pretty = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = ["--color=yes", "-v"]
+testpaths = ["tests"]
+filterwarnings = ["error"]
+
+# https://coverage.readthedocs.io/en/6.4/config.html
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "@overload",
+  "except ImportError",
+  "raise NotImplementedError()",
+  "pass",
+]
+
+[tool.coverage.run]
+source = ["src/witty"]
