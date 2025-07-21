@@ -8,7 +8,6 @@ import os
 import re
 import sys
 import tempfile
-import warnings
 from contextlib import contextmanager
 from distutils.command.build_ext import build_ext
 from distutils.compilers.C.base import new_compiler
@@ -19,6 +18,7 @@ import Cython
 import nanobind
 from Cython.Build.Dependencies import cythonize
 from setuptools import Distribution, Extension
+from typing_extensions import deprecated
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -266,7 +266,7 @@ def compile_cython(
     )
 
 
-@warnings.deprecated(
+@deprecated(
     "Use compile_cython for PYX and compile_nanobind for nanobind C/C++. "
     "compile_module will be removed in future releases."
 )
