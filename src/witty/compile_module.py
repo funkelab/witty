@@ -9,8 +9,8 @@ import re
 import sys
 import tempfile
 from contextlib import contextmanager
+from distutils.ccompiler import new_compiler
 from distutils.command.build_ext import build_ext
-from distutils.compilers.C.base import new_compiler
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
