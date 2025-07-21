@@ -16,7 +16,11 @@ authors = [
   { email = "talley.lambert@gmail.com", name = "Talley Lambert" },
 ]
 dynamic = ["version"]
-dependencies = ["Cython >= 3.0,<3.2", "setuptools; python_version >= '3.12'"]
+dependencies = [
+  "Cython >= 3.0,<3.2",
+  "setuptools; python_version >= '3.12'",
+  "nanobind"
+]
 classifiers = [
   "License :: OSI Approved :: BSD License",
   "Programming Language :: Python :: 3",

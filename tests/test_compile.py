@@ -26,7 +26,7 @@ def to_vector({type} x):
     return v
 """
 
-    module_int = witty.compile_module(
+    module_int = witty.compile_cython(
         source_pxy_template.format(type="int"),
         language="c++",
         force_rebuild=True,
@@ -37,7 +37,7 @@ def to_vector({type} x):
     assert result == 7
     assert type(result) is int
 
-    module_float = witty.compile_module(
+    module_float = witty.compile_cython(
         source_pxy_template.format(type="float"), language="c++", output_dir=tmp_path
     )
     result = module_float.add(3, 4)
@@ -47,3 +47,23 @@ def to_vector({type} x):
 
     assert module_float.__file__
     assert Path(module_float.__file__).parent == tmp_path
+
+
+def test_nanobind(tmp_path: Path) -> None:
+    fancy_module_cpp = """
+#include <nanobind/nanobind.h>
+
+int add(int a, int b) {
+	return a + b;
+}
+
+NB_MODULE(fancy_module, m) {
+	m.def("add", &add);
+}
+"""
+
+    fancy_module = witty.compile_nanobind(fancy_module_cpp)
+    result = fancy_module.add(3, 2)
+
+    assert result == 5
+    assert type(result) is int

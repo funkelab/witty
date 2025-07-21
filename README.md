@@ -5,10 +5,14 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/witty.svg?color=green)](https://python.org)
 [![CI](https://github.com/funkelab/witty/actions/workflows/ci.yaml/badge.svg)](https://github.com/funkelab/witty/actions/workflows/ci.yaml)
 
-A "well-in-time" compiler, using `cython` to compile `pyx` modules at runtime.
+A "well-in-time" compiler using `cython` or
+[`nanobind`](https://nanobind.readthedocs.io/en/latest/) to compile `pyx` or
+C/C++ modules at runtime.
+
+## Cython
 
 ```python
-from witty import compile_module
+from witty import compile_cython
 
 
 fancy_module_pyx = """
@@ -17,13 +21,39 @@ def add(int a, int b):
 """
 
 # equivalent to "import fancy_module"
-fancy_module = compile_module(fancy_module_pyx)
+fancy_module = compile_cython(fancy_module_pyx)
 
 result = fancy_module.add(3, 2)
 print("fancy_module.add(3, 2) =", result)
 ```
 
-This module will no longer be needed if/when https://github.com/cython/cython/pull/555 gets merged into Cython.
+## Nanobind
+
+```python
+from witty import compile_nanobind
+
+
+fancy_module_cpp = """
+#include <nanobind/nanobind.h>
+
+int add(int a, int b) {
+	return a + b;
+}
+
+NB_MODULE(fancy_module, m) {
+	m.def("add", &add);
+}
+"""
+
+# equivalent to "import fancy_module"
+fancy_module = compile_nanobind(fancy_module_cpp)
+
+result = fancy_module.add(3, 2)
+print("fancy_module.add(3, 2) =", result)
+```
+
+This module will no longer be needed if/when
+https://github.com/cython/cython/pull/555 gets merged into Cython.
 
 ## Why?
 
@@ -48,7 +78,7 @@ def to_vector(values):
     return vec
 """
 
-fancy_module = witty.compile_module(
+fancy_module = witty.compile_cython(
     source_pxy_template.format(type="float"), language="c++"
 )
 
@@ -60,7 +90,13 @@ print(vec_float)
 
 ## How?
 
-`witty` invokes `cython` to compile the module given as a PYX string (just like it would compile it during build time). The compiled module ends up in the Cython cache directory, with a hash build from the content of the PYX string. Repeated calls to `compile_module` will only invoke the compiler if the exact PYX string has not been compiled before (or if `force_rebuild==True`). Compilation is protected by a file lock, i.e., concurrent calls to `compile_module` are safe.
+`witty` invokes `cython` or `nanobind` to compile the module given as a
+PYX/C/C++ source string (just like it would compile it during build time). The
+compiled module ends up in a cache directory, with a hash build from the
+content of the source string. Repeated calls to `compile_[cython,nanobind]`
+will only invoke the compiler if the exact source string has not been compiled
+before (or if `force_rebuild==True`). Compilation is protected by a file lock,
+i.e., concurrent calls to `compile_[cython,nanobind]` are safe.
 
 ## For developers
 
