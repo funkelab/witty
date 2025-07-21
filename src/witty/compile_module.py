@@ -164,13 +164,6 @@ def compile_nanobind(
         "-O3",
     ]
 
-    if extra_link_args is None:
-        extra_link_args = []
-    extra_link_args += [
-        "-Wl\\,-s",
-        "-Wl\\,--gc-sections",
-    ]
-
     return _compile_module(
         source,
         source_type="nanobind",
