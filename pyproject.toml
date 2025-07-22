@@ -32,6 +32,10 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+[project.optional-dependencies]
+cython = ["Cython >= 3.0,<3.2"]
+nanobind = ["nanobind"]
+
 [dependency-groups]
 dev = ['pytest', 'ruff', 'mypy', 'pdoc', 'pre-commit', 'ipython', 'pytest-cov']
 

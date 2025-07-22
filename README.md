@@ -5,11 +5,26 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/witty.svg?color=green)](https://python.org)
 [![CI](https://github.com/funkelab/witty/actions/workflows/ci.yaml/badge.svg)](https://github.com/funkelab/witty/actions/workflows/ci.yaml)
 
-A "well-in-time" compiler using `cython` or
+A "well-in-time" compiler using [`cython`](https://cython.org) or
 [`nanobind`](https://nanobind.readthedocs.io/en/latest/) to compile `pyx` or
-C/C++ modules at runtime.
+C/C++ modules (respectively) at runtime.
+
+## Installation
+
+You can install `witty` via pip:
+
+```sh
+# for Cython support
+pip install witty[cython]
+# for Nanobind support
+pip install witty[nanobind]
+```
 
 ## Cython
+
+> [!NOTE]
+> Cython is currently included by default with witty, but this will change in the future.
+> Please install with `pip install witty[cython]` if you wish to compile Cython modules.
 
 ```python
 from witty import compile_cython
@@ -29,6 +44,10 @@ print("fancy_module.add(3, 2) =", result)
 
 ## Nanobind
 
+> [!NOTE]
+> Cython is currently included by default with witty, but this will change in the future.
+> Please install with `pip install witty[nanobind]` if you wish to compile nanobind modules.
+
 ```python
 from witty import compile_nanobind
 
@@ -37,11 +56,11 @@ fancy_module_cpp = """
 #include <nanobind/nanobind.h>
 
 int add(int a, int b) {
-	return a + b;
+ return a + b;
 }
 
 NB_MODULE(fancy_module, m) {
-	m.def("add", &add);
+ m.def("add", &add);
 }
 """
 
@@ -53,7 +72,7 @@ print("fancy_module.add(3, 2) =", result)
 ```
 
 This module will no longer be needed if/when
-https://github.com/cython/cython/pull/555 gets merged into Cython.
+<https://github.com/cython/cython/pull/555> gets merged into Cython.
 
 ## Why?
 
