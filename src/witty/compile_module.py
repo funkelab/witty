@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from distutils.ccompiler import new_compiler
 from distutils.command.build_ext import build_ext
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Callable, Literal
 
 import Cython
 import nanobind
@@ -115,7 +115,7 @@ def compile_nanobind(
         The compiled module.
     """
 
-    def build_extra_objects(build_dir: Path):
+    def build_extra_objects(build_dir: Path) -> list[str]:
         nanobind_base_dir = Path(nanobind.include_dir()) / ".."
         source_dir = Path(nanobind.source_dir())
         target = build_dir / str(source_dir).lstrip("/") / "nb_combined.o"
@@ -129,7 +129,7 @@ def compile_nanobind(
         compiler.add_include_dir(
             str(nanobind_base_dir / "ext" / "robin_map" / "include")
         )
-        compiler.add_include_dir(distutils.sysconfig.get_python_inc())
+        compiler.add_include_dir(distutils.sysconfig.get_python_inc())  # type: ignore [attr-defined]
 
         nanobind_objects = compiler.compile(
             sources=[source_dir / "nb_combined.cpp"],
