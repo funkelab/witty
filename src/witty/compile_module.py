@@ -126,7 +126,9 @@ def compile_nanobind(
         compiler = new_compiler()
 
         compiler.add_include_dir(nanobind.include_dir())
-        compiler.add_include_dir(nanobind_base_dir / "ext" / "robin_map" / "include")
+        compiler.add_include_dir(
+            str(nanobind_base_dir / "ext" / "robin_map" / "include")
+        )
         compiler.add_include_dir(distutils.sysconfig.get_python_inc())
 
         nanobind_objects = compiler.compile(
