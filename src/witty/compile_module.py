@@ -114,6 +114,9 @@ def compile_nanobind(
     ModuleType
         The compiled module.
     """
+    # operator delete(void*, std::align_val_t) first became part of the
+    # system C++ runtime in macOS 10.13
+    os.environ.setdefault("MACOSX_DEPLOYMENT_TARGET", "10.13")
 
     def build_extra_objects(build_dir: Path) -> list[str]:
         nanobind_base_dir = Path(nanobind.include_dir()) / ".."
