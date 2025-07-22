@@ -129,7 +129,7 @@ def compile_nanobind(
         compiler.add_include_dir(
             str(nanobind_base_dir / "ext" / "robin_map" / "include")
         )
-        compiler.add_include_dir(distutils.sysconfig.get_python_inc())  # type: ignore [attr-defined]
+        compiler.add_include_dir(distutils.sysconfig.get_python_inc())
 
         nanobind_objects = compiler.compile(
             sources=[source_dir / "nb_combined.cpp"],
@@ -147,7 +147,7 @@ def compile_nanobind(
             ],
         )
 
-        return nanobind_objects
+        return nanobind_objects  # type: ignore[no-any-return]
 
     if include_dirs is None:
         include_dirs = []
