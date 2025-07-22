@@ -397,7 +397,7 @@ def _compile_module(
                 f"definition with the module name.  Found {len(names)}"
             )
         name = name[0]
-    module_name = name + "_" + module_hash
+    module_name = (name or "") + "_" + module_hash
 
     # already loaded?
     if module_name in sys.modules and not force_rebuild:
