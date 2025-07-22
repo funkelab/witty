@@ -396,7 +396,7 @@ def _compile_module(
                 "For nanobind modules, the source must contain a single NB_MODULE "
                 f"definition with the module name.  Found {len(names)}"
             )
-        name = name[0]
+        name = names[0]
     module_name = (name or "") + "_" + module_hash
 
     # already loaded?
