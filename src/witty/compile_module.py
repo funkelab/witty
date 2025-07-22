@@ -390,8 +390,12 @@ def _compile_module(
             "For non-PYX builds, the module name should not be given but be part "
             "of the source file."
         )
-        name = re.findall(r"NB_MODULE\s*\(\s*(.*),", source)
-        assert len(name) == 1, "More than one NB_MODULE found, only one allowed."
+        names = re.findall(r"NB_MODULE\s*\(\s*(.*),", source)
+        if len(names) != 1:
+            raise ValueError(
+                "For nanobind modules, the source must contain a single NB_MODULE "
+                f"definition with the module name.  Found {len(names)}"
+            )
         name = name[0]
     module_name = name + "_" + module_hash
 
