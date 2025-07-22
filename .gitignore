@@ -11,3 +11,4 @@ build
 dist
 .vscode
 docs/_build/
+uv.lock
