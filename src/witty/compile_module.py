@@ -134,10 +134,16 @@ def compile_nanobind(
         )
         compiler.add_include_dir(distutils.sysconfig.get_python_inc())
 
-        nanobind_objects = compiler.compile(
-            sources=[source_dir / "nb_combined.cpp"],
-            output_dir=str(build_dir),
-            extra_preargs=[
+        if sys.platform == "win32":
+            cxx_flags = [
+                "/std:c++17",
+                "/DNDEBUG",
+                "/DNB_COMPACT_ASSERTIONS",
+                "/O2",
+                "/EHsc",
+            ]
+        else:
+            cxx_flags = [
                 "-std=c++17",
                 "-fvisibility=hidden",
                 "-DNDEBUG",
@@ -147,7 +153,11 @@ def compile_nanobind(
                 "-ffunction-sections",
                 "-fdata-sections",
                 "-O3",
-            ],
+            ]
+        nanobind_objects = compiler.compile(
+            sources=[source_dir / "nb_combined.cpp"],
+            output_dir=str(build_dir),
+            extra_preargs=cxx_flags,
         )
 
         return nanobind_objects  # type: ignore[no-any-return]
@@ -160,14 +170,24 @@ def compile_nanobind(
 
     if extra_compile_args is None:
         extra_compile_args = []
-    extra_compile_args += [
-        "-std=c++17",
-        "-fvisibility=hidden",
-        "-DNDEBUG",
-        "-DNB_COMPACT_ASSERTIONS",
-        "-fPIC",
-        "-O3",
-    ]
+    # Use MSVC style flag on Windows, GCC/Clang flags otherwise
+    if sys.platform == "win32":
+        extra_compile_args += [
+            "/std:c++17",
+            "/DNDEBUG",
+            "/DNB_COMPACT_ASSERTIONS",
+            "/O2",
+            "/EHsc",
+        ]
+    else:
+        extra_compile_args += [
+            "-std=c++17",
+            "-fvisibility=hidden",
+            "-DNDEBUG",
+            "-DNB_COMPACT_ASSERTIONS",
+            "-fPIC",
+            "-O3",
+        ]
 
     return _compile_module(
         source,
