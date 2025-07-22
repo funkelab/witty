@@ -64,10 +64,7 @@ disallow_untyped_defs = false
 minversion = "7.0"
 addopts = ["--color=yes", "-v"]
 testpaths = ["tests"]
-filterwarnings = [
-  "error",
-  "ignore:the distutils:DeprecationWarning",
-]
+filterwarnings = ["error", "ignore:the distutils:DeprecationWarning"]
 
 # https://coverage.readthedocs.io/en/6.4/config.html
 [tool.coverage.report]
