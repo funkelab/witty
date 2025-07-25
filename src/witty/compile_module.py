@@ -456,6 +456,7 @@ def _compile_module(
                     "NB_MODULE(\\1_" + module_hash + ", \\2)",
                     source,
                 )
+                source = source.replace("WITTY_MODULE_HASH", module_hash)
 
             # create source file
             module_source.write_text(source)
