@@ -475,7 +475,7 @@ def _compile_module(
 
             extension = Extension(
                 module_name,
-                sources=[str(module_source)],
+                sources=[str(module_source), *source_files],
                 include_dirs=[str(x) for x in include_dirs],
                 library_dirs=[str(x) for x in library_dirs],
                 language=language,
