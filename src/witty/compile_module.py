@@ -172,22 +172,22 @@ def compile_nanobind(
         extra_compile_args = []
     # Use MSVC style flag on Windows, GCC/Clang flags otherwise
     if sys.platform == "win32":
-        extra_compile_args += [
+        extra_compile_args = [
             "/std:c++17",
             "/DNDEBUG",
             "/DNB_COMPACT_ASSERTIONS",
             "/O2",
             "/EHsc",
-        ]
+        ] + extra_compile_args
     else:
-        extra_compile_args += [
+        extra_compile_args = [
             "-std=c++17",
             "-fvisibility=hidden",
             "-DNDEBUG",
             "-DNB_COMPACT_ASSERTIONS",
             "-fPIC",
             "-O3",
-        ]
+        ] + extra_compile_args
 
     return _compile_module(
         source,
