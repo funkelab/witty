@@ -219,6 +219,7 @@ def compile_cython(
     force_rebuild: bool | None = None,
     quiet: bool = False,
     output_dir: Path | None = None,
+    depends_on: Sequence[Path | str] = (),
     **extension_kwargs: Any,
 ) -> ModuleType:
     """Compile a Cython module given as a PYX source string.
@@ -232,8 +233,8 @@ def compile_cython(
     source_pyx : str
         The PYX source code.
     source_files : list of Path, optional
-        Additional source files the PYX code depends on. Changes to these
-        files will trigger re-compilation of the module.
+        Additional source files (.c, .cpp files) that will be compiled and linked
+        against. Changes to these files will trigger re-compilation of the module.
     include_dirs : list of Path, optional
         List of directories to search for C/C++ header files (in Unix
         form for portability).
@@ -265,6 +266,9 @@ def compile_cython(
         - Windows: `%LOCALAPPDATA%/witty/cache`
         - macOS: `~/Library/Caches/witty`
         - Linux: os.environ['XDG_CACHE_HOME']/witty or `~/.cache/witty`
+    depends_on : list of str, optional
+        List of additional files that the module depends on. Only used for cache
+        invalidation.
     extension_kwargs : dict, optional
         Additional keyword arguments passed to the distutils `Extension` constructor.
 
@@ -287,6 +291,7 @@ def compile_cython(
         force_rebuild=force_rebuild,
         quiet=quiet,
         output_dir=output_dir,
+        depends_on=depends_on,
         **extension_kwargs,
     )
 
@@ -395,6 +400,7 @@ def _compile_module(
     force_rebuild: bool | None = None,
     quiet: bool = False,
     output_dir: Path | None = None,
+    depends_on: Sequence[Path | str] = (),
     **extension_kwargs: Any,
 ) -> ModuleType:
     if output_dir is None:
@@ -405,7 +411,11 @@ def _compile_module(
         force_rebuild = os.getenv("WITTY_FORCE_REBUILD", "0").lower() in ("1", "true")
 
     module_hash = _generate_hash(
-        source, source_files, extra_compile_args, extra_link_args, extension_kwargs
+        source,
+        tuple(source_files) + tuple(depends_on),
+        extra_compile_args,
+        extra_link_args,
+        extension_kwargs,
     )
 
     if source_type == "nanobind":
