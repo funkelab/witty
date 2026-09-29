@@ -1,6 +1,20 @@
+import subprocess
+import sys
 from pathlib import Path
 
 import witty
+
+CONCURRENT = """
+import sys
+from pathlib import Path
+
+import witty
+
+module = witty.compile_cython(
+    "def add(int x, int y): return x + y", output_dir=Path(sys.argv[1])
+)
+assert module.add(3, 4) == 7
+"""
 
 
 def test_cache_dir() -> None:
@@ -67,3 +81,21 @@ NB_MODULE(fancy_module, m) {
 
     assert result == 5
     assert type(result) is int
+
+
+def test_concurrent_compilation(tmp_path: Path) -> None:
+    args = [sys.executable, "-c", CONCURRENT, str(tmp_path)]
+    processes = [
+        subprocess.Popen(
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        for _ in range(4)
+    ]
+    outputs = [process.communicate() for process in processes]
+
+    for process, (_, stderr) in zip(processes, outputs):
+        assert process.returncode == 0, stderr
+    # one of them compiles the module, the others wait for it
+    built = [stdout for stdout, _ in outputs if "Build module" in stdout]
+    reused = [stdout for stdout, _ in outputs if "Reusing" in stdout]
+    assert (len(built), len(reused)) == (1, 3)
