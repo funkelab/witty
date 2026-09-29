@@ -19,7 +19,8 @@ dynamic = ["version"]
 dependencies = [
   "Cython >= 3.0,<3.2",
   "setuptools",
-  "nanobind"
+  "nanobind",
+  "typing_extensions >= 4.5.0; python_version < '3.13'",
 ]
 classifiers = [
   "License :: OSI Approved :: BSD License",

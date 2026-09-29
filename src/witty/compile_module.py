@@ -18,7 +18,11 @@ import Cython
 import nanobind
 from Cython.Build.Dependencies import cythonize
 from setuptools import Distribution, Extension
-from typing_extensions import deprecated
+
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
