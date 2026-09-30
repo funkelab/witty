@@ -18,7 +18,11 @@ import Cython
 import nanobind
 from Cython.Build.Dependencies import cythonize
 from setuptools import Distribution, Extension
-from typing_extensions import deprecated
+
+if sys.version_info >= (3, 13):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -452,7 +456,7 @@ def _compile_module(
             print(f"Compiling {module_name} into {module_lib}...")
 
         # make sure the same module is not build concurrently
-        with _module_locked(module_source):
+        with _module_locked(module_lib):
             # already compiled?
             if module_lib.is_file() and not force_rebuild:
                 if not quiet:
@@ -505,8 +509,12 @@ def _compile_module(
 
             build_extension.extensions = extensions
             build_extension.build_temp = temp_dir
-            build_extension.build_lib = str(output_dir)
-            build_extension.run()
+            # build next to the destination, to then move the module there at
+            # once: it is never there in parts
+            with tempfile.TemporaryDirectory(dir=output_dir) as lib_dir:
+                build_extension.build_lib = lib_dir
+                build_extension.run()
+                os.replace(Path(lib_dir, module_lib.name), module_lib)
 
             if not quiet:
                 print(f"Build module {module_name} in {module_lib}")
@@ -558,7 +566,10 @@ def _hash_args(containers: tuple[dict | list | None, ...]) -> str:
 
 @contextmanager
 def _module_locked(module_path: Path) -> Iterator[None]:
-    """Temporarily lock a module file to prevent concurrent compilation."""
+    """Temporarily lock a module file to prevent concurrent compilation.
+
+    The lock file is next to the module, for all processes to agree on it.
+    """
     module_lock_file = module_path.with_suffix(".lock")
     with open(module_lock_file, "w") as lock_fd:
         _lock_file(lock_fd)
@@ -585,10 +596,16 @@ if os.name == "nt":
     import msvcrt
 
     def _lock_file(file: Any) -> None:
-        msvcrt.locking(file.fileno(), msvcrt.LK_LOCK, os.path.getsize(file.name))  # type: ignore
+        # the file is empty: lock its first byte, which does not have to exist
+        while True:
+            try:
+                msvcrt.locking(file.fileno(), msvcrt.LK_LOCK, 1)  # type: ignore
+                return
+            except OSError:
+                pass  # LK_LOCK gives up after 10 attempts, a second apart
 
     def _unlock_file(file: Any) -> None:
-        msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, os.path.getsize(file.name))  # type: ignore
+        msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore
 
 else:
     import fcntl
