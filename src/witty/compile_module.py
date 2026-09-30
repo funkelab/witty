@@ -8,11 +8,12 @@ import os
 import re
 import sys
 import tempfile
+from collections.abc import Callable
 from contextlib import contextmanager
 from distutils.ccompiler import new_compiler
 from distutils.command.build_ext import build_ext
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import Cython
 import nanobind
