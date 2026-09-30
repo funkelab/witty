@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 name = "witty"
 description = "Well-in-Time Compiler for Cython Modules"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = []
 license = { text = "BSD 3-Clause License" }
 authors = [
@@ -25,11 +25,12 @@ dependencies = [
 classifiers = [
   "License :: OSI Approved :: BSD License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Typing :: Typed",
 ]
 
@@ -45,7 +46,7 @@ homepage = "https://github.com/funkelab/witty"
 repository = "https://github.com/funkelab/witty"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 src = ["src"]
 
 [tool.ruff.lint]
